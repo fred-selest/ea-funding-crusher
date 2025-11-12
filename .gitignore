@@ -1,0 +1,33 @@
+# MetaTrader 5 compiled files
+*.ex5
+
+# MetaTrader 5 logs
+*.log
+
+# MetaTrader 5 temporary files
+*.tmp
+
+# Windows files
+Thumbs.db
+Desktop.ini
+
+# MacOS files
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Backup files
+*.bak
+*.old
+
+# Test results
+/TestResults/
+/Backtest/
+
+# User-specific files
+*.user
