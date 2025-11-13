@@ -100,12 +100,29 @@ public:
       }
 
       // Sécurité: Si le calcul semble bizarre, utiliser une valeur par défaut
-      if(valuePerPoint <= 0 || valuePerPoint > 1000)
+      // Vérifier si la valeur est aberrante (trop petite ou trop grande)
+      if(valuePerPoint <= 0 || valuePerPoint < 0.1 || valuePerPoint > 1000)
       {
-         // Pour US30/DJ30, généralement 1$ par point par mini-lot ou 10$/100$ par lot standard
-         // Estimation conservative
-         valuePerPoint = 100.0; // Valeur typique pour US30 CFD sur beaucoup de brokers
-         Print("⚠️  ValuePerPoint calculée semble incorrecte, utilisation valeur par défaut: ", valuePerPoint);
+         // Pour US30/DJ30, essayer de détecter via le nom du symbole
+         string symbolName = symbol;
+         StringToUpper(symbolName);
+
+         if(StringFind(symbolName, "US30") >= 0 || StringFind(symbolName, "DJ30") >= 0 ||
+            StringFind(symbolName, "DOW") >= 0 || StringFind(symbolName, "US 30") >= 0)
+         {
+            // US30/DJ30: généralement 1$ à 100$ par point selon le type de contrat
+            // Utilisons une valeur conservative de 100$ pour standard lot
+            valuePerPoint = 100.0;
+            Print("⚠️  Détection US30/DJ30: ValuePerPoint fixée à ", valuePerPoint, "$ (standard lot)");
+         }
+         else
+         {
+            // Par défaut pour indices CFD
+            valuePerPoint = 10.0;
+            Print("⚠️  ValuePerPoint calculée semble incorrecte (",
+                  DoubleToString((tickValue / tickSize) * point, 4),
+                  "), utilisation valeur par défaut: ", valuePerPoint);
+         }
       }
 
       Print("📐 Valeur par point (1 lot): ", DoubleToString(valuePerPoint, 2), "$");
@@ -122,6 +139,23 @@ public:
       // Appliquer les limites du symbole
       lotSize = MathMax(lotSize, minLot);
       lotSize = MathMin(lotSize, maxLot);
+
+      // SÉCURITÉ ABSOLUE: Limite max de lot selon la balance
+      // Pour éviter les erreurs de calcul catastrophiques
+      double maxLotByBalance = balance / 50000.0; // Max 1 lot par 50k$ de balance
+      if(lotSize > maxLotByBalance)
+      {
+         Print("⚠️  Lot réduit pour sécurité balance: ", DoubleToString(lotSize, 2),
+               " → ", DoubleToString(maxLotByBalance, 2));
+         lotSize = maxLotByBalance;
+      }
+
+      // Limite absolue: jamais plus de 10 lots
+      if(lotSize > 10.0)
+      {
+         Print("🚨 ALERTE: Lot size > 10, réduction à 2.0 lots pour sécurité");
+         lotSize = 2.0;
+      }
 
       // SÉCURITÉ CRITIQUE: Limite absolue basée sur le risque maximal
       // Calculer la perte maximale que ce lot pourrait causer
