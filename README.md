@@ -151,7 +151,7 @@ AutoAdjustDST       = true    // Ajustement auto DST
 
 // Stratégie
 BreakoutPeriod      = 5       // 5 premières minutes
-MinBreakoutPoints   = 50      // 50 points minimum
+MinBreakoutPoints   = 30      // 30 points minimum
 ATRMultiplierSL     = 2.0     // SL = 2x ATR
 ATRMultiplierTP     = 3.0     // TP = 3x ATR
 UseVolume           = true    // Confirmation volume

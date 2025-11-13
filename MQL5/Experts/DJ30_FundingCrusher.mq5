@@ -36,7 +36,7 @@ input bool     AutoAdjustDST = true;         // Ajustement auto heure d'été/hi
 //--- Paramètres de stratégie
 input group "═══════ Stratégie de Trading ═══════"
 input int      BreakoutPeriod = 5;           // Période pour détecter le breakout (minutes)
-input double   MinBreakoutPoints = 50;       // Points minimum pour valider un breakout
+input double   MinBreakoutPoints = 30;       // Points minimum pour valider un breakout
 input double   ATRMultiplierSL = 2.0;        // Multiplicateur ATR pour Stop Loss
 input double   ATRMultiplierTP = 3.0;        // Multiplicateur ATR pour Take Profit
 input int      ATRPeriod = 14;               // Période ATR
@@ -72,6 +72,8 @@ datetime       g_lastTradeDay = 0;
 double         g_sessionHigh = 0;
 double         g_sessionLow = 0;
 bool           g_sessionInitialized = false;
+datetime       g_sessionStartTime = 0;
+int            g_barsInSession = 0;
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
@@ -167,6 +169,8 @@ void OnTick()
          g_tradesOpenedToday = 0;
          g_lastTradeDay = currentDay;
          g_sessionInitialized = false;
+         g_barsInSession = 0;
+         g_sessionStartTime = 0;
          Print("📅 Nouveau jour de trading - Compteurs réinitialisés");
       }
 
@@ -193,15 +197,29 @@ void OnTick()
       {
          InitializeSession();
       }
-
-      // Mettre à jour le high/low de la session
-      UpdateSessionHighLow();
-
-      // Chercher des opportunités de trading
-      if(g_tradesOpenedToday < MaxTradesPerDay &&
-         g_tradeManager.CountOpenPositions() < MaxPositions)
+      else
       {
-         CheckForTradingOpportunity();
+         // Mettre à jour le high/low SEULEMENT pendant les premières barres
+         if(g_barsInSession < BreakoutPeriod)
+         {
+            UpdateSessionHighLow();
+            g_barsInSession++;
+
+            if(g_barsInSession == BreakoutPeriod)
+            {
+               Print("📍 Range de session fixé - High: ", g_sessionHigh, " Low: ", g_sessionLow,
+                     " (", DoubleToString(g_sessionHigh - g_sessionLow, 1), " points)");
+            }
+         }
+         else
+         {
+            // Après les premières barres, chercher des opportunités de trading
+            if(g_tradesOpenedToday < MaxTradesPerDay &&
+               g_tradeManager.CountOpenPositions() < MaxPositions)
+            {
+               CheckForTradingOpportunity();
+            }
+         }
       }
    }
 
@@ -218,19 +236,15 @@ void OnTick()
 //+------------------------------------------------------------------+
 void InitializeSession()
 {
-   double high[], low[];
-   ArraySetAsSeries(high, true);
-   ArraySetAsSeries(low, true);
+   // Initialiser avec la première bougie de la session
+   g_sessionHigh = iHigh(_Symbol, PERIOD_M5, 1);
+   g_sessionLow = iLow(_Symbol, PERIOD_M5, 1);
+   g_sessionStartTime = iTime(_Symbol, PERIOD_M5, 1);
+   g_barsInSession = 1;
+   g_sessionInitialized = true;
 
-   if(CopyHigh(_Symbol, PERIOD_M5, 0, BreakoutPeriod, high) > 0 &&
-      CopyLow(_Symbol, PERIOD_M5, 0, BreakoutPeriod, low) > 0)
-   {
-      g_sessionHigh = high[ArrayMaximum(high)];
-      g_sessionLow = low[ArrayMinimum(low)];
-      g_sessionInitialized = true;
-
-      Print("🎯 Session initialisée - High: ", g_sessionHigh, " Low: ", g_sessionLow);
-   }
+   Print("🎯 Session initialisée - Début à ", TimeToString(g_sessionStartTime, TIME_DATE|TIME_MINUTES),
+         " High: ", g_sessionHigh, " Low: ", g_sessionLow);
 }
 
 //+------------------------------------------------------------------+
@@ -255,6 +269,8 @@ void CheckForTradingOpportunity()
 {
    double currentClose = iClose(_Symbol, PERIOD_M5, 1);
    double currentOpen = iOpen(_Symbol, PERIOD_M5, 1);
+   double currentHigh = iHigh(_Symbol, PERIOD_M5, 1);
+   double currentLow = iLow(_Symbol, PERIOD_M5, 1);
 
    // Copier les valeurs ATR
    if(CopyBuffer(g_atrHandle, 0, 0, 3, g_atrBuffer) <= 0)
@@ -267,8 +283,14 @@ void CheckForTradingOpportunity()
    {
       double breakoutSize = currentClose - g_sessionHigh;
 
+      Print("🔍 Breakout potentiel BUY détecté - Close: ", currentClose,
+            " > High: ", g_sessionHigh, " Taille: ", DoubleToString(breakoutSize / _Point, 1), " points");
+
       if(breakoutSize >= MinBreakoutPoints * _Point)
       {
+         Print("✅ Taille du breakout validée: ", DoubleToString(breakoutSize / _Point, 1),
+               " >= ", MinBreakoutPoints, " points");
+
          // Confirmation par volume si activé
          if(UseVolume)
          {
@@ -277,7 +299,11 @@ void CheckForTradingOpportunity()
             if(CopyTickVolume(_Symbol, PERIOD_M5, 0, 3, volume) > 0)
             {
                if(volume[1] <= volume[2]) // Volume décroissant = pas de confirmation
+               {
+                  Print("⚠️  Breakout BUY rejeté - Volume insuffisant: ", volume[1], " <= ", volume[2]);
                   return;
+               }
+               Print("✅ Volume confirmé BUY: ", volume[1], " > ", volume[2]);
             }
          }
 
@@ -305,8 +331,14 @@ void CheckForTradingOpportunity()
    {
       double breakoutSize = g_sessionLow - currentClose;
 
+      Print("🔍 Breakout potentiel SELL détecté - Close: ", currentClose,
+            " < Low: ", g_sessionLow, " Taille: ", DoubleToString(breakoutSize / _Point, 1), " points");
+
       if(breakoutSize >= MinBreakoutPoints * _Point)
       {
+         Print("✅ Taille du breakout validée: ", DoubleToString(breakoutSize / _Point, 1),
+               " >= ", MinBreakoutPoints, " points");
+
          // Confirmation par volume si activé
          if(UseVolume)
          {
@@ -315,7 +347,11 @@ void CheckForTradingOpportunity()
             if(CopyTickVolume(_Symbol, PERIOD_M5, 0, 3, volume) > 0)
             {
                if(volume[1] <= volume[2]) // Volume décroissant = pas de confirmation
+               {
+                  Print("⚠️  Breakout SELL rejeté - Volume insuffisant: ", volume[1], " <= ", volume[2]);
                   return;
+               }
+               Print("✅ Volume confirmé SELL: ", volume[1], " > ", volume[2]);
             }
          }
 

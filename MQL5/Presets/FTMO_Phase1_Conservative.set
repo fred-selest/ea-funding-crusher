@@ -17,7 +17,7 @@ AutoAdjustDST=true
 
 ; ═══════ Stratégie de Trading ═══════
 BreakoutPeriod=5
-MinBreakoutPoints=50
+MinBreakoutPoints=30
 ATRMultiplierSL=2.0
 ATRMultiplierTP=3.0
 ATRPeriod=14
