@@ -1,0 +1,35 @@
+; Configuration optimale pour FTMO Phase 1 (conservateur)
+; Objectif: 10% en 30 jours avec risque minimal
+
+; ═══════ Gestion du Risque ═══════
+RiskPerTrade=1.0
+MaxDailyLoss=4.0
+MaxTotalLoss=8.0
+MaxPositions=1
+MaxTradesPerDay=3
+
+; ═══════ Filtre Temporel ═══════
+StartHour=13
+StartMinute=30
+EndHour=18
+EndMinute=0
+AutoAdjustDST=true
+
+; ═══════ Stratégie de Trading ═══════
+BreakoutPeriod=5
+MinBreakoutPoints=50
+ATRMultiplierSL=2.0
+ATRMultiplierTP=3.0
+ATRPeriod=14
+UseVolume=true
+
+; ═══════ Gestion des Positions ═══════
+BreakEvenPoints=50
+BreakEvenProfit=10
+TrailingStart=100
+TrailingStep=20
+CloseAtEndOfSession=true
+
+; ═══════ Paramètres Généraux ═══════
+MagicNumber=202411
+TradeComment=DJ30_Crusher
