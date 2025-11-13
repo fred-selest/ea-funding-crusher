@@ -5,6 +5,44 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.2.1] - 2025-11-13
+
+### 🚨 CORRECTIF ULTRA-CRITIQUE - Détection des valeurs aberrantes
+
+#### Nouveau problème découvert
+Même après le fix v1.2.0, le calcul produisait encore des lots démesurés car le broker renvoie des valeurs de tick incorrectes pour US30.cash :
+- TickValue = 0.01$ au lieu de réaliste
+- Calcul automatique = 0.01$ par point (FAUX!)
+- Lot calculé = 3930 lots → réduit à 1000 lots → "not enough money"
+
+#### Solution v1.2.1
+
+1. **Détection améliorée des valeurs aberrantes**:
+   - Avant: `if(valuePerPoint > 1000)`
+   - Après: `if(valuePerPoint < 0.1 || valuePerPoint > 1000)`
+   - Détecte maintenant les valeurs trop **petites** ET trop grandes
+
+2. **Détection automatique US30/DJ30**:
+   - Recherche "US30", "DJ30", "DOW" dans le nom du symbole
+   - Force automatiquement `valuePerPoint = 100$` (valeur standard)
+
+3. **Limites absolues multicouches**:
+   - **Limite par balance**: Max 1 lot par 50k$ (= 2 lots pour 100k$)
+   - **Limite absolue**: Jamais > 10 lots (si dépassé → force à 2 lots)
+   - **Limite par risque**: Toujours < 5% du compte
+
+4. **Ordre des vérifications**:
+   ```
+   Calcul → Normalisation → Limite symbole → Limite balance → Limite absolue → Vérif risque
+   ```
+
+#### Résultat attendu (100k$ account, 1% risk, 25 points SL)
+- valuePerPoint: 100$ (détecté US30)
+- Lot calculé: 1000 / (25 × 100) = 0.4 lots
+- Perte max: 0.4 × 25 × 100 = 1,000$ ✅
+
+---
+
 ## [1.2.0] - 2025-11-13
 
 ### 🚨 CORRECTIF CRITIQUE - Calcul du Lot Size
