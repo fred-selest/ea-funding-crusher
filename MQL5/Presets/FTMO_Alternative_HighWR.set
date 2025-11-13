@@ -1,43 +1,36 @@
-; Configuration alternative - Win Rate élevé
-; Stratégie: Maximiser le win rate avec filtrage très strict
+; Configuration alternative - Win Rate eleve
+; Strategie: Maximiser le win rate avec filtrage tres strict
 ; Win rate attendu: 50-60% | PF attendu: > 1.5
 
-; ═══════ Gestion du Risque ═══════
+; Gestion du Risque
 RiskPerTrade=1.0
 MaxDailyLoss=4.0
 MaxTotalLoss=8.0
 MaxPositions=1
-MaxTradesPerDay=2            ; ⬇️ Max 2 trades/jour (très sélectif)
+MaxTradesPerDay=2
 
-; ═══════ Filtre Temporel ═══════
+; Filtre Temporel
 StartHour=13
 StartMinute=30
-EndHour=17                   ; ⬇️ Session plus courte (3h30)
+EndHour=17
 EndMinute=0
-AutoAdjustDST=true
+AutoAdjustDST=1
 
-; ═══════ Stratégie de Trading ═══════
-BreakoutPeriod=7             ; ⬆️ Range plus long (7 minutes)
-MinBreakoutPoints=80         ; ⬆️⬆️ Filtrage TRÈS strict
-ATRMultiplierSL=3.0          ; ⬆️ SL très large (patience)
-ATRMultiplierTP=4.0          ; TP raisonnable (ratio 1:1.33)
+; Strategie de Trading
+BreakoutPeriod=7
+MinBreakoutPoints=80
+ATRMultiplierSL=3.0
+ATRMultiplierTP=4.0
 ATRPeriod=14
-UseVolume=true               ; Confirmation obligatoire
+UseVolume=1
 
-; ═══════ Gestion des Positions ═══════
-BreakEvenPoints=100          ; ⬆️ BE très tardif
-BreakEvenProfit=30           ; ⬆️ Bon profit sécurisé
+; Gestion des Positions
+BreakEvenPoints=100
+BreakEvenProfit=30
 TrailingStart=150
 TrailingStep=40
-CloseAtEndOfSession=true
+CloseAtEndOfSession=1
 
-; ═══════ Paramètres Généraux ═══════
+; Parametres Generaux
 MagicNumber=202411
 TradeComment=DJ30_HighWR
-
-; PHILOSOPHIE:
-; - TRÈS sélectif: seulement les meilleurs breakouts
-; - Session plus courte (première partie de l'ouverture US)
-; - SL très large pour absorber la volatilité
-; - TP raisonnable mais atteignable
-; - Objectif: 20-30 trades/mois avec 55%+ win rate
