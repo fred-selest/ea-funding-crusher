@@ -166,10 +166,15 @@ public:
                   if(newSL > currentSL || currentSL == 0)
                   {
                      newSL = NormalizePrice(newSL);
-                     if(m_trade.PositionModify(m_position.Ticket(), newSL, m_position.TakeProfit()))
+
+                     // Vérifier que le SL respecte le stop level minimum
+                     if(IsValidStopLevel(currentPrice, newSL, true))
                      {
-                        Print("🎯 Break-Even BUY activé: Ticket=", m_position.Ticket(),
-                              " Nouveau SL=", newSL);
+                        if(m_trade.PositionModify(m_position.Ticket(), newSL, m_position.TakeProfit()))
+                        {
+                           Print("🎯 Break-Even BUY activé: Ticket=", m_position.Ticket(),
+                                 " Nouveau SL=", newSL);
+                        }
                      }
                   }
                }
@@ -180,10 +185,15 @@ public:
                   if(newSL < currentSL || currentSL == 0)
                   {
                      newSL = NormalizePrice(newSL);
-                     if(m_trade.PositionModify(m_position.Ticket(), newSL, m_position.TakeProfit()))
+
+                     // Vérifier que le SL respecte le stop level minimum
+                     if(IsValidStopLevel(currentPrice, newSL, false))
                      {
-                        Print("🎯 Break-Even SELL activé: Ticket=", m_position.Ticket(),
-                              " Nouveau SL=", newSL);
+                        if(m_trade.PositionModify(m_position.Ticket(), newSL, m_position.TakeProfit()))
+                        {
+                           Print("🎯 Break-Even SELL activé: Ticket=", m_position.Ticket(),
+                                 " Nouveau SL=", newSL);
+                        }
                      }
                   }
                }
@@ -223,10 +233,14 @@ public:
                   // Ne déplacer que si le nouveau SL est meilleur
                   if(newSL > currentSL && newSL < currentPrice)
                   {
-                     if(m_trade.PositionModify(m_position.Ticket(), newSL, m_position.TakeProfit()))
+                     // Vérifier que le SL respecte le stop level minimum
+                     if(IsValidStopLevel(currentPrice, newSL, true))
                      {
-                        Print("📈 Trailing Stop BUY: Ticket=", m_position.Ticket(),
-                              " Nouveau SL=", newSL);
+                        if(m_trade.PositionModify(m_position.Ticket(), newSL, m_position.TakeProfit()))
+                        {
+                           Print("📈 Trailing Stop BUY: Ticket=", m_position.Ticket(),
+                                 " Nouveau SL=", newSL);
+                        }
                      }
                   }
                }
@@ -244,10 +258,14 @@ public:
                   // Ne déplacer que si le nouveau SL est meilleur
                   if(newSL < currentSL && newSL > currentPrice)
                   {
-                     if(m_trade.PositionModify(m_position.Ticket(), newSL, m_position.TakeProfit()))
+                     // Vérifier que le SL respecte le stop level minimum
+                     if(IsValidStopLevel(currentPrice, newSL, false))
                      {
-                        Print("📉 Trailing Stop SELL: Ticket=", m_position.Ticket(),
-                              " Nouveau SL=", newSL);
+                        if(m_trade.PositionModify(m_position.Ticket(), newSL, m_position.TakeProfit()))
+                        {
+                           Print("📉 Trailing Stop SELL: Ticket=", m_position.Ticket(),
+                                 " Nouveau SL=", newSL);
+                        }
                      }
                   }
                }
@@ -261,6 +279,28 @@ public:
    {
       double tickSize = SymbolInfoDouble(m_symbol, SYMBOL_TRADE_TICK_SIZE);
       return MathRound(price / tickSize) * tickSize;
+   }
+
+   //--- Vérifie si un SL/TP respecte les niveaux minimum du broker
+   bool IsValidStopLevel(double currentPrice, double stopPrice, bool isBuy)
+   {
+      // Obtenir le stop level minimum du broker (en points)
+      long stopLevel = SymbolInfoInteger(m_symbol, SYMBOL_TRADE_STOPS_LEVEL);
+      double minDistance = stopLevel * _Point;
+
+      // Ajouter une marge de sécurité de 20%
+      minDistance *= 1.2;
+
+      double distance = MathAbs(currentPrice - stopPrice);
+
+      if(distance < minDistance)
+      {
+         Print("⚠️  SL trop proche: Distance=", DoubleToString(distance / _Point, 1),
+               " points < Minimum=", DoubleToString(minDistance / _Point, 1), " points");
+         return false;
+      }
+
+      return true;
    }
 
    //--- Obtenir les informations des positions

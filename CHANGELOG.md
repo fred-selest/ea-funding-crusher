@@ -5,6 +5,37 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.2.2] - 2025-11-13
+
+### 🐛 CORRECTIF - Erreurs de modification de Stop Loss
+
+#### Problème découvert en backtest
+Les modifications de SL (break-even et trailing stop) échouaient avec l'erreur `[Invalid stops]` car le nouveau SL était trop proche du prix actuel, violant le `SYMBOL_TRADE_STOPS_LEVEL` du broker.
+
+**Exemple d'erreur** :
+```
+failed modify #180 sl: 47365.28 -> sl: 47390.69 [Invalid stops]
+```
+
+#### Solution implémentée
+
+**Nouvelle fonction `IsValidStopLevel()` dans TradeManager.mqh** :
+- Récupère le stop level minimum du broker (`SYMBOL_TRADE_STOPS_LEVEL`)
+- Ajoute une marge de sécurité de 20%
+- Vérifie que la distance prix actuel ↔ nouveau SL est suffisante
+- Log un avertissement si le SL est trop proche
+
+**Modifications des fonctions** :
+- `ManageBreakEven()`: Vérifie le stop level avant modification (BUY et SELL)
+- `ManageTrailingStop()`: Vérifie le stop level avant modification (BUY et SELL)
+
+**Impact** :
+- Élimine les erreurs `[Invalid stops]`
+- Les SL ne sont modifiés que quand c'est autorisé par le broker
+- Améliore la stabilité de l'EA en conditions réelles
+
+---
+
 ## [1.2.1] - 2025-11-13
 
 ### 🚨 CORRECTIF ULTRA-CRITIQUE - Détection des valeurs aberrantes
