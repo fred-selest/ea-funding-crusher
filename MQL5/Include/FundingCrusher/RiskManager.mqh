@@ -70,7 +70,7 @@ public:
    {
       if(stopLossPoints <= 0)
       {
-         Print("❌ Erreur: Stop loss invalide");
+         Print("❌ Erreur: Stop loss invalide (", stopLossPoints, ")");
          return 0.0;
       }
 
@@ -80,21 +80,89 @@ public:
       // Obtenir les informations du symbole
       double tickSize = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_SIZE);
       double tickValue = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_VALUE);
+      double contractSize = SymbolInfoDouble(symbol, SYMBOL_TRADE_CONTRACT_SIZE);
+      double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
       double minLot = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
       double maxLot = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
       double lotStep = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
 
-      // Calculer le lot
-      double lotSize = (riskAmount / (stopLossPoints * tickValue / tickSize));
+      Print("📊 Infos symbole: TickSize=", tickSize, " TickValue=", tickValue,
+            " ContractSize=", contractSize, " Point=", point);
+
+      // Calculer la valeur d'un point pour 1 lot
+      // Pour les indices CFD: valuePerPoint = tickValue / tickSize × point
+      double valuePerPoint = 0;
+
+      if(tickSize > 0)
+      {
+         // Méthode 1: Calculer via tick value
+         valuePerPoint = (tickValue / tickSize) * point;
+      }
+
+      // Sécurité: Si le calcul semble bizarre, utiliser une valeur par défaut
+      if(valuePerPoint <= 0 || valuePerPoint > 1000)
+      {
+         // Pour US30/DJ30, généralement 1$ par point par mini-lot ou 10$/100$ par lot standard
+         // Estimation conservative
+         valuePerPoint = 100.0; // Valeur typique pour US30 CFD sur beaucoup de brokers
+         Print("⚠️  ValuePerPoint calculée semble incorrecte, utilisation valeur par défaut: ", valuePerPoint);
+      }
+
+      Print("📐 Valeur par point (1 lot): ", DoubleToString(valuePerPoint, 2), "$");
+
+      // Calculer le lot size basé sur le risque
+      // lotSize = riskAmount / (stopLossPoints × valuePerPoint)
+      double lotSize = riskAmount / (stopLossPoints * valuePerPoint);
+
+      Print("🔢 Lot calculé brut: ", DoubleToString(lotSize, 4));
 
       // Normaliser le lot
       lotSize = MathFloor(lotSize / lotStep) * lotStep;
+
+      // Appliquer les limites du symbole
       lotSize = MathMax(lotSize, minLot);
       lotSize = MathMin(lotSize, maxLot);
 
-      Print("💰 Calcul lot: Risk=", DoubleToString(riskAmount, 2),
-            " SL=", DoubleToString(stopLossPoints, 1),
-            " Lot=", DoubleToString(lotSize, 2));
+      // SÉCURITÉ CRITIQUE: Limite absolue basée sur le risque maximal
+      // Calculer la perte maximale que ce lot pourrait causer
+      double maxPossibleLoss = lotSize * stopLossPoints * valuePerPoint;
+      double maxPossibleLossPercent = (maxPossibleLoss / balance) * 100.0;
+
+      Print("🛡️  Perte max théorique: ", DoubleToString(maxPossibleLoss, 2),
+            "$ (", DoubleToString(maxPossibleLossPercent, 2), "%)");
+
+      // Si la perte possible dépasse 2× le risque prévu, réduire drastiquement
+      if(maxPossibleLossPercent > (m_riskPerTradePercent * 2.0))
+      {
+         Print("⚠️  ALERTE: Lot size trop élevé! Réduction forcée...");
+
+         // Recalculer avec une marge de sécurité de 50%
+         double safeLotSize = (riskAmount * 0.5) / (stopLossPoints * valuePerPoint);
+         safeLotSize = MathFloor(safeLotSize / lotStep) * lotStep;
+         safeLotSize = MathMax(safeLotSize, minLot);
+
+         lotSize = safeLotSize;
+         maxPossibleLoss = lotSize * stopLossPoints * valuePerPoint;
+         maxPossibleLossPercent = (maxPossibleLoss / balance) * 100.0;
+
+         Print("✅ Lot ajusté pour sécurité: ", DoubleToString(lotSize, 2),
+               " Perte max: ", DoubleToString(maxPossibleLoss, 2), "$ (",
+               DoubleToString(maxPossibleLossPercent, 2), "%)");
+      }
+
+      // Limite absolue: jamais plus de 5% du compte en risque
+      if(maxPossibleLossPercent > 5.0)
+      {
+         Print("🚨 ERREUR CRITIQUE: Lot size toujours trop élevé après ajustement!");
+         Print("   Lot=", lotSize, " Perte max=", maxPossibleLoss,
+               "$ (", maxPossibleLossPercent, "%)");
+         return 0.0; // Refuse d'ouvrir la position
+      }
+
+      Print("✅ Lot final: ", DoubleToString(lotSize, 2),
+            " | Risque: ", DoubleToString(riskAmount, 2), "$",
+            " | SL: ", DoubleToString(stopLossPoints, 1), " points",
+            " | Perte max: ", DoubleToString(maxPossibleLoss, 2), "$");
 
       return lotSize;
    }
