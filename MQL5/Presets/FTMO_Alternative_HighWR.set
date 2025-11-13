@@ -1,0 +1,43 @@
+; Configuration alternative - Win Rate élevé
+; Stratégie: Maximiser le win rate avec filtrage très strict
+; Win rate attendu: 50-60% | PF attendu: > 1.5
+
+; ═══════ Gestion du Risque ═══════
+RiskPerTrade=1.0
+MaxDailyLoss=4.0
+MaxTotalLoss=8.0
+MaxPositions=1
+MaxTradesPerDay=2            ; ⬇️ Max 2 trades/jour (très sélectif)
+
+; ═══════ Filtre Temporel ═══════
+StartHour=13
+StartMinute=30
+EndHour=17                   ; ⬇️ Session plus courte (3h30)
+EndMinute=0
+AutoAdjustDST=true
+
+; ═══════ Stratégie de Trading ═══════
+BreakoutPeriod=7             ; ⬆️ Range plus long (7 minutes)
+MinBreakoutPoints=80         ; ⬆️⬆️ Filtrage TRÈS strict
+ATRMultiplierSL=3.0          ; ⬆️ SL très large (patience)
+ATRMultiplierTP=4.0          ; TP raisonnable (ratio 1:1.33)
+ATRPeriod=14
+UseVolume=true               ; Confirmation obligatoire
+
+; ═══════ Gestion des Positions ═══════
+BreakEvenPoints=100          ; ⬆️ BE très tardif
+BreakEvenProfit=30           ; ⬆️ Bon profit sécurisé
+TrailingStart=150
+TrailingStep=40
+CloseAtEndOfSession=true
+
+; ═══════ Paramètres Généraux ═══════
+MagicNumber=202411
+TradeComment=DJ30_HighWR
+
+; PHILOSOPHIE:
+; - TRÈS sélectif: seulement les meilleurs breakouts
+; - Session plus courte (première partie de l'ouverture US)
+; - SL très large pour absorber la volatilité
+; - TP raisonnable mais atteignable
+; - Objectif: 20-30 trades/mois avec 55%+ win rate

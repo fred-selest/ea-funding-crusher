@@ -1,0 +1,42 @@
+; Configuration alternative - TP très élevé
+; Stratégie: Accepter plus de pertes mais gains massifs
+; Win rate attendu: 30-35% | PF attendu: > 1.5
+
+; ═══════ Gestion du Risque ═══════
+RiskPerTrade=1.0
+MaxDailyLoss=4.0
+MaxTotalLoss=8.0
+MaxPositions=1
+MaxTradesPerDay=3
+
+; ═══════ Filtre Temporel ═══════
+StartHour=13
+StartMinute=30
+EndHour=18
+EndMinute=0
+AutoAdjustDST=true
+
+; ═══════ Stratégie de Trading ═══════
+BreakoutPeriod=5
+MinBreakoutPoints=40         ; Moins strict que v1 (plus de trades)
+ATRMultiplierSL=2.0          ; SL normal
+ATRMultiplierTP=6.0          ; ⬆️⬆️ TP TRÈS ambitieux (ratio 1:3)
+ATRPeriod=14
+UseVolume=false              ; ⬇️ Désactivé pour plus de trades
+
+; ═══════ Gestion des Positions ═══════
+BreakEvenPoints=0            ; Désactivé
+BreakEvenProfit=0
+TrailingStart=300            ; ⬆️ Trailing très tardif
+TrailingStep=60              ; ⬆️ Très large
+CloseAtEndOfSession=true
+
+; ═══════ Paramètres Généraux ═══════
+MagicNumber=202411
+TradeComment=DJ30_HighTP
+
+; PHILOSOPHIE:
+; - Laisser courir les gagnants TRÈS loin (TP = 6×ATR)
+; - Accepter un win rate plus faible (30-35%)
+; - Chaque gain compense 3 pertes
+; - Volume désactivé = plus de trades

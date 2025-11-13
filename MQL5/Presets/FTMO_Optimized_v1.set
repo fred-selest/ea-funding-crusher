@@ -1,0 +1,86 @@
+; Configuration optimisée pour améliorer Profit Factor
+; Objectif: Win Rate > 40% ET PF > 1.5
+; Basé sur analyse backtest: WR=27%, PF=0.96
+
+; ═══════ Gestion du Risque ═══════
+RiskPerTrade=1.0
+MaxDailyLoss=4.0
+MaxTotalLoss=8.0
+MaxPositions=1
+MaxTradesPerDay=3
+
+; ═══════ Filtre Temporel ═══════
+StartHour=13
+StartMinute=30
+EndHour=18
+EndMinute=0
+AutoAdjustDST=true
+
+; ═══════ Stratégie de Trading ═══════
+; CHANGEMENT CLÉ: Filtrage plus strict pour meilleur win rate
+BreakoutPeriod=5
+MinBreakoutPoints=60         ; ⬆️ De 30 à 60 - Filtrage beaucoup plus strict
+ATRMultiplierSL=2.5          ; ⬆️ De 2.0 à 2.5 - SL plus large pour volatilité DJ30
+ATRMultiplierTP=5.0          ; ⬆️ De 3.0 à 5.0 - TP plus ambitieux pour meilleur ratio
+ATRPeriod=14
+UseVolume=true
+
+; ═══════ Gestion des Positions ═══════
+; Break-even désactivé pour éviter sorties prématurées
+BreakEvenPoints=0            ; ⬇️ Désactivé (0 = jamais activé)
+BreakEvenProfit=0            ; ⬇️ Désactivé
+TrailingStart=200            ; ⬆️ De 100 à 200 - Démarre plus tard
+TrailingStep=50              ; ⬆️ De 20 à 50 - Plus de marge
+CloseAtEndOfSession=true
+
+; ═══════ Paramètres Généraux ═══════
+MagicNumber=202411
+TradeComment=DJ30_Optimized
+
+; ═══════════════════════════════════════════════
+; EXPLICATIONS DES CHANGEMENTS:
+; ═══════════════════════════════════════════════
+;
+; 1. MinBreakoutPoints: 30 → 60
+;    - Filtrage BEAUCOUP plus strict
+;    - Objectif: Éliminer 50% des trades (les moins bons)
+;    - Attendu: 40-50 trades au lieu de 90
+;    - Win rate cible: 40-50% au lieu de 27%
+;
+; 2. ATRMultiplierSL: 2.0 → 2.5
+;    - SL plus large pour gérer la volatilité du DJ30
+;    - Évite les stop-outs prématurés
+;    - Laisse plus de marge au trade
+;
+; 3. ATRMultiplierTP: 3.0 → 5.0
+;    - TP beaucoup plus ambitieux
+;    - Ratio Risk/Reward: 1:2 au lieu de 1:1.5
+;    - Objectif: Chaque gain compense 2 pertes
+;
+; 4. BreakEvenPoints: 50 → 0 (DÉSACTIVÉ)
+;    - Évite les sorties prématurées sur retracements
+;    - Le SL reste à son niveau initial jusqu'au TP ou trailing
+;    - Plus de patience = meilleurs résultats
+;
+; 5. TrailingStart: 100 → 200
+;    - Démarre seulement quand le trade a bien progressé
+;    - Évite de couper les grands mouvements trop tôt
+;
+; 6. TrailingStep: 20 → 50
+;    - Beaucoup plus de marge pour les retracements
+;    - Le DJ30 peut facilement retracer 40-50 points
+;
+; ═══════════════════════════════════════════════
+; RÉSULTATS ATTENDUS:
+; ═══════════════════════════════════════════════
+;
+; Avec ces paramètres, on devrait obtenir:
+; - Nombre de trades: 40-50 (au lieu de 90)
+; - Win Rate: 40-50% (au lieu de 27%)
+; - Avg Win: 450-600$ (au lieu de 258$)
+; - Avg Loss: 200-250$ (au lieu de 165$)
+; - Ratio Win/Loss: 2.0-2.5 (au lieu de 1.57)
+; - Profit Factor: 1.5-2.0 (au lieu de 0.96)
+; - Drawdown: < 5% (actuellement 3.42%)
+;
+; Si PF > 1.5 est atteint, la config est validée!
