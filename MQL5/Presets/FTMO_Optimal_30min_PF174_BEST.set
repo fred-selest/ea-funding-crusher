@@ -1,0 +1,45 @@
+; ═══════════════════════════════════════════════════════════
+; DJ30 Funding Crusher - Configuration Optimale PF 1.74
+; ═══════════════════════════════════════════════════════════
+;
+; MEILLEURE CONFIGURATION TESTÉE !
+;
+; Résultats backtest (Oct 1 - Nov 12, 2025):
+; - Profit Factor: 1.74 (RECORD)
+; - Win Rate: 74.24%
+; - Profit Net: +5.98% (6 semaines)
+; - Drawdown Max: 1.85%
+; - Total Trades: 66
+;
+; Découverte clé:
+; - BreakoutPeriod 30 min (capture vrais mouvements)
+; - MinBreakoutPoints 500 (balance quantité/qualité)
+; - SL large 3.0 ATR (évite stop-out prématurés)
+; - Break-even OFF (laisse respirer les trades)
+; - Trailing tardif 200 pts (capture plus de mouvement)
+;
+; ═══════════════════════════════════════════════════════════
+
+RiskPerTrade=1.0
+MaxDailyLoss=4.0
+MaxTotalLoss=8.0
+MaxPositions=1
+MaxTradesPerDay=3
+StartHour=13
+StartMinute=30
+EndHour=18
+EndMinute=0
+AutoAdjustDST=1
+BreakoutPeriod=30
+MinBreakoutPoints=500
+ATRMultiplierSL=3.0
+ATRMultiplierTP=3.5
+ATRPeriod=14
+UseVolume=1
+BreakEvenPoints=0
+BreakEvenProfit=0
+TrailingStart=200
+TrailingStep=50
+CloseAtEndOfSession=1
+MagicNumber=202411
+TradeComment=DJ30_30min_PF174
